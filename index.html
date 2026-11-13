@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Grafico 0DTE backup</title>
+<style>
+:root{--bg:#ffffff;--panel:#f5f7fb;--fg:#131722;--muted:#5d6270;--line:#e0e3eb;--accent:#2962ff;--call:#089981;--put:#f23645;--flip:#8e24aa;--pin:#e08600;--band:#fff4d6}
+@media (prefers-color-scheme:dark){:root{--bg:#131722;--panel:#1b202d;--fg:#d1d4dc;--muted:#8a8e9b;--line:#2a2e39;--accent:#2962ff;--call:#26a69a;--put:#ef5350;--flip:#ce93d8;--pin:#ffb74d;--band:#3d3015}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:1200px;margin:auto;padding:12px max(16px,env(safe-area-inset-right)) 24px max(16px,env(safe-area-inset-left))}
+header{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 12px;margin-bottom:10px}
+h1{font-size:19px;margin:0}
+.sub{color:var(--muted);font-size:12px}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.seg button{font:inherit;color:var(--fg);background:transparent;border:0;padding:0 14px;min-height:36px;cursor:pointer}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:#fff}
+.chart{position:relative;border:1px solid var(--line);border-radius:8px;overflow:hidden;height:clamp(360px,62vh,680px);background:var(--bg)}
+.chart iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.note{font-size:12px;color:var(--muted);margin:6px 0 0}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin-top:12px}
+@media (max-width:760px){.grid{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px;min-width:0}
+.card h2{font-size:13px;margin:0 0 10px;letter-spacing:.03em;text-transform:uppercase;color:var(--muted)}
+.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.f{display:flex;flex-direction:column;gap:3px;min-width:0}
+.f.full{grid-column:1/-1}
+label{font-size:11px;font-weight:700;color:var(--muted)}
+input{width:100%;font:inherit;font-size:16px;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px;font-variant-numeric:tabular-nums}
+input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn{font:inherit;font-weight:700;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:6px;padding:8px 12px;cursor:pointer}
+table{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+td{border-bottom:1px solid var(--line);padding:6px 4px;vertical-align:top}
+td.n{text-align:right;white-space:nowrap;font-weight:600}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:10px}
+.kpi{border:1px solid var(--line);border-radius:6px;padding:8px;background:var(--bg);min-width:0}
+.kpi b{display:block;font-size:16px;overflow-wrap:anywhere}.kpi span{font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase}
+.saved{font-size:11px;color:var(--muted);margin-top:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><h1>Grafico 0DTE · backup</h1><span class="sub">Senza Claude e senza IBKR · grafico TradingView, livelli inseriti a mano</span></header>
+
+<div class="bar" role="toolbar" aria-label="Opzioni grafico">
+  <div class="seg" id="symSeg"><button type="button" data-sym="SP:SPX" aria-pressed="true">SPX</button><button type="button" data-sym="AMEX:SPY" aria-pressed="false">SPY</button><button type="button" data-sym="CME_MINI:ES1!" aria-pressed="false">ES</button></div>
+  <div class="seg" id="tfSeg"><button type="button" data-tf="5" aria-pressed="true">5m</button><button type="button" data-tf="15" aria-pressed="false">15m</button><button type="button" data-tf="1" aria-pressed="false">1m</button></div>
+</div>
+
+<div class="chart"><iframe id="tv" title="Grafico TradingView" allowtransparency="true" allowfullscreen src="https://s.tradingview.com/widgetembed/?symbol=SP%3ASPX&interval=5&hidesidetoolbar=0&symboledit=1&saveimage=0&studies=%5B%5D&theme=dark&style=1&timezone=Europe%2FRome&locale=it&withdateranges=1"></iframe></div>
+<p class="note">Grafico e dati: TradingView (widget gratuito). SPX non ha volumi, quindi il VWAP si vede solo su SPY. Le linee orizzontali puoi disegnarle con gli strumenti a sinistra del grafico, ma il widget non le conserva quando ricarichi.</p>
+
+<div class="grid">
+<section class="card">
+  <h2>Livelli GEX 0DTE · scala SPX</h2>
+  <div class="fields">
+    <div class="f"><label for="spot">Spot SPX (dal grafico)</label><input id="spot" inputmode="decimal" autocomplete="off"></div>
+    <div class="f"><label for="iv">IV 0DTE di seduta %</label><input id="iv" inputmode="decimal" autocomplete="off" placeholder="es. 8,0"></div>
+    <div class="f"><label for="flip">Flip</label><input id="flip" inputmode="decimal" autocomplete="off"></div>
+    <div class="f"><label for="pin">Pin</label><input id="pin" inputmode="decimal" autocomplete="off"></div>
+    <div class="f"><label for="bLo">Fascia flip: basso</label><input id="bLo" inputmode="decimal" autocomplete="off"></div>
+    <div class="f"><label for="bHi">Fascia flip: alto</label><input id="bHi" inputmode="decimal" autocomplete="off"></div>
+    <div class="f"><label for="pw">Put wall</label><input id="pw" inputmode="decimal" autocomplete="off"></div>
+    <div class="f"><label for="cw">Call wall</label><input id="cw" inputmode="decimal" autocomplete="off"></div>
+    <div class="f"><label for="orLo">Opening range: basso</label><input id="orLo" inputmode="decimal" autocomplete="off"></div>
+    <div class="f"><label for="orHi">Opening range: alto</label><input id="orHi" inputmode="decimal" autocomplete="off"></div>
+  </div>
+  <div class="bar" style="margin:10px 0 0"><button type="button" class="btn" id="clear">Azzera livelli</button></div>
+  <div class="saved" id="saved"></div>
+</section>
+<section class="card">
+  <h2>Lettura</h2>
+  <div class="kpis"><div class="kpi"><b id="kPhase">—</b><span>Fase (Roma)</span></div><div class="kpi"><b id="kReg">—</b><span>Regime</span></div><div class="kpi"><b id="kEm">—</b><span>EM residuo pt</span></div></div>
+  <table id="lv"></table>
+  <p class="note">Distanze = livello − spot (negativo: livello sotto lo spot). EM residuo = spot × IV × √((minuti alla chiusura / 390) / 252). XSP = SPX / 10. Lettura indicativa, non è consulenza finanziaria.</p>
+</section>
+</div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var KEY = 'grafico0dteBackup';
+  var IDS = ['spot', 'iv', 'flip', 'pin', 'bLo', 'bHi', 'pw', 'cw', 'orLo', 'orHi'];
+  var $ = function (id) { return document.getElementById(id); };
+  var st = { sym: 'SP:SPX', tf: '5' };
+  function load() { try { return JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { return {}; } }
+  function save(o) { try { localStorage.setItem(KEY, JSON.stringify(o)); return true; } catch (e) { return false; } }
+  function num(id) { var v = parseFloat(String($(id).value).replace(/\s/g, '').replace(',', '.')); return isFinite(v) && v > 0 ? v : null; }
+  function f(v, d) { return v == null ? '—' : v.toLocaleString('it-IT', { minimumFractionDigits: d, maximumFractionDigits: d }); }
+  function sg(v, d) { return (v >= 0 ? '+' : '−') + f(Math.abs(v), d); }
+  function dark() { return window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches; }
+
+  function chart() {
+    var p = new URLSearchParams({ symbol: st.sym, interval: st.tf, hidesidetoolbar: '0', symboledit: '1', saveimage: '0',
+      studies: st.sym === 'AMEX:SPY' ? '["VWAP@tv-basicstudies"]' : '[]', theme: dark() ? 'dark' : 'light', style: '1',
+      timezone: 'Europe/Rome', locale: 'it', withdateranges: '1' });
+    $('tv').src = 'https://s.tradingview.com/widgetembed/?' + p.toString();
+  }
+  function seg(id, attr, key) {
+    $(id).addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b) return;
+      st[key] = b.getAttribute(attr);
+      Array.prototype.forEach.call($(id).querySelectorAll('button'), function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+      var o = load(); o.sym = st.sym; o.tf = st.tf; save(o); chart();
+    });
+  }
+
+  /* ora di New York e fasi della skill (minuti ET) */
+  function nyNow() {
+    var p = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', weekday: 'short', hourCycle: 'h23' }).formatToParts(new Date());
+    var g = function (t) { return (p.find(function (x) { return x.type === t; }) || {}).value; };
+    return { min: +g('hour') * 60 + +g('minute'), wd: g('weekday') };
+  }
+  function romeNow() { return new Intl.DateTimeFormat('it-IT', { timeZone: 'Europe/Rome', hour: '2-digit', minute: '2-digit' }).format(new Date()); }
+  function phase(m, wd) {
+    if (wd === 'Sat' || wd === 'Sun') return ['Chiuso', 'weekend'];
+    if (m < 570) return ['F0', 'pre-apertura'];
+    if (m >= 960) return ['Chiuso', 'dopo la chiusura'];
+    if (m < 600) return ['F1', 'apertura, solo osservazione'];
+    if (m >= 945) return ['F6', 'solo gestione'];
+    if (m >= 900) return ['F5', 'ultima ora'];
+    if (m >= 810) return ['F4', 'pinning'];
+    if (m >= 690) return ['F3', 'metà seduta'];
+    return ['F2', 'direzionale'];
+  }
+
+  function render() {
+    var ny = nyNow(), ph = phase(ny.min, ny.wd);
+    $('kPhase').textContent = romeNow() + ' · ' + ph[0];
+    $('kPhase').title = ph[1];
+    var spot = num('spot'), iv = num('iv'), lo = num('bLo'), hi = num('bHi');
+    if (lo && hi && lo > hi) { var t = lo; lo = hi; hi = t; }
+    var left = ny.min < 570 ? 390 : Math.max(0, 960 - ny.min);
+    var em = spot && iv ? spot * iv / 100 / Math.sqrt(252) * Math.sqrt(Math.max(left, 30) / 390) : null;
+    $('kEm').textContent = em ? f(em, 1) : '—';
+    var reg = '—';
+    if (spot && lo && hi) {
+      if (spot >= lo && spot <= hi) reg = 'Neutro';
+      else { var d = spot > hi ? spot - hi : lo - spot; reg = (spot > hi ? 'Positivo' : 'Negativo') + (em ? (d / em >= 0.25 ? ' pieno' : ' debole') : ''); }
+    }
+    $('kReg').textContent = reg;
+    var rows = [['Call wall', 'cw', 'var(--call)'], ['Pin', 'pin', 'var(--pin)'], ['OR alto', 'orHi', 'var(--muted)'], ['Fascia alto', 'bHi', '#c9a227'], ['Flip', 'flip', 'var(--flip)'], ['Fascia basso', 'bLo', '#c9a227'], ['OR basso', 'orLo', 'var(--muted)'], ['Put wall', 'pw', 'var(--put)']];
+    var list = rows.map(function (r) { return { name: r[0], v: num(r[1]), c: r[2] }; }).filter(function (r) { return r.v; });
+    if (spot) list.push({ name: 'Spot', v: spot, c: 'var(--accent)', spot: true });
+    list.sort(function (a, b) { return b.v - a.v; });
+    $('lv').innerHTML = list.length ? list.map(function (r) {
+      var dist = spot && !r.spot ? sg(r.v - spot, 1) + ' pt' + (em ? ' · ' + sg((r.v - spot) / em, 2) + ' EM' : '') : (r.spot ? 'riferimento' : '');
+      return '<tr><td><span class="sw" style="background:' + r.c + '"></span>' + (r.spot ? '<b>' + r.name + '</b>' : r.name) + '</td><td class="n">' + f(r.v, 2) + '<br><span class="sub">XSP ' + f(r.v / 10, 2) + '</span></td><td class="n">' + dist + '</td></tr>';
+    }).join('') : '<tr><td class="sub">Inserisci i livelli a sinistra.</td></tr>';
+  }
+
+  function persist() {
+    var o = load(); IDS.forEach(function (id) { o[id] = $(id).value; }); o.at = Date.now();
+    $('saved').textContent = save(o) ? 'Salvato su questo dispositivo alle ' + romeNow() + '.' : 'Questo browser non permette il salvataggio: i livelli si perdono alla chiusura.';
+    render();
+  }
+
+  var o = load();
+  IDS.forEach(function (id) { if (o[id] != null) $(id).value = o[id]; $(id).addEventListener('input', persist); });
+  if (o.at) $('saved').textContent = 'Livelli salvati il ' + new Date(o.at).toLocaleString('it-IT', { timeZone: 'Europe/Rome', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) + ': controlla che siano di oggi.';
+  if (o.sym) st.sym = o.sym; if (o.tf) st.tf = o.tf;
+  ['symSeg', 'tfSeg'].forEach(function (id) { Array.prototype.forEach.call($(id).querySelectorAll('button'), function (b) { b.setAttribute('aria-pressed', String((b.dataset.sym || b.dataset.tf) === (id === 'symSeg' ? st.sym : st.tf))); }); });
+  seg('symSeg', 'data-sym', 'sym'); seg('tfSeg', 'data-tf', 'tf');
+  $('clear').addEventListener('click', function () { IDS.forEach(function (id) { if (id !== 'iv') $(id).value = ''; }); persist(); });
+  chart(); render(); setInterval(render, 30000);
+})();
+</script>
+</body>
+</html>
