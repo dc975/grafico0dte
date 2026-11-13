@@ -4,35 +4,59 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Grafico 0DTE">
 <title>Grafico 0DTE backup</title>
 <style>
-:root{--bg:#ffffff;--panel:#f5f7fb;--fg:#131722;--muted:#5d6270;--line:#e0e3eb;--accent:#2962ff;--call:#089981;--put:#f23645;--flip:#8e24aa;--pin:#e08600;--band:#fff4d6}
-@media (prefers-color-scheme:dark){:root{--bg:#131722;--panel:#1b202d;--fg:#d1d4dc;--muted:#8a8e9b;--line:#2a2e39;--accent:#2962ff;--call:#26a69a;--put:#ef5350;--flip:#ce93d8;--pin:#ffb74d;--band:#3d3015}}
+:root{--bg:#ffffff;--panel:#f5f7fb;--fg:#131722;--muted:#5d6270;--line:#e0e3eb;--accent:#2962ff;--up:#089981;--down:#f23645;--call:#089981;--put:#f23645;--flip:#8e24aa;--pin:#e08600;--vwap:#2962ff;--or:#787b86;--bandfill:rgba(224,134,0,.13);--bandline:#c9a227;--warn:#b26a00;--err:#d32f2f}
+@media (prefers-color-scheme:dark){:root{--bg:#131722;--panel:#1b202d;--fg:#d1d4dc;--muted:#8a8e9b;--line:#2a2e39;--accent:#2962ff;--up:#26a69a;--down:#ef5350;--call:#26a69a;--put:#ef5350;--flip:#ce93d8;--pin:#ffb74d;--vwap:#5b8cff;--or:#9598a1;--bandfill:rgba(255,183,77,.12);--bandline:#ffb74d;--warn:#ffb74d;--err:#ef5350}}
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
-.wrap{max-width:1200px;margin:auto;padding:12px max(16px,env(safe-area-inset-right)) 24px max(16px,env(safe-area-inset-left))}
-header{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 12px;margin-bottom:10px}
-h1{font-size:19px;margin:0}
+.wrap{max-width:1200px;margin:auto;padding:calc(10px + env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:6px 14px;margin-bottom:10px}
+h1{font-size:18px;margin:0}
+.px{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px;font-variant-numeric:tabular-nums}
+#last{font-size:28px;font-weight:700;line-height:1.1}#chg{font-size:14px;font-weight:600}#chg.up{color:var(--up)}#chg.down{color:var(--down)}
 .sub{color:var(--muted);font-size:12px}
+.pill{display:inline-flex;align-items:center;gap:7px;padding:4px 11px;border-radius:999px;font-size:12px;background:var(--panel);border:1px solid var(--line)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex:none}
+.pill[data-s="live"] .dot{background:var(--up)}.pill[data-s="warn"] .dot{background:var(--warn)}.pill[data-s="err"] .dot{background:var(--err)}
+.tabs{display:flex;gap:6px;margin-bottom:10px}
+.tab{font:inherit;font-weight:700;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:7px;padding:7px 14px;cursor:pointer}
+.tab[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
 .bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
-.seg button{font:inherit;color:var(--fg);background:transparent;border:0;padding:0 14px;min-height:36px;cursor:pointer}
+.seg button{font:inherit;color:var(--fg);background:transparent;border:0;padding:0 13px;min-height:36px;cursor:pointer}
 .seg button+button{border-left:1px solid var(--line)}
 .seg button[aria-pressed="true"]{background:var(--accent);color:#fff}
-.chart{position:relative;border:1px solid var(--line);border-radius:8px;overflow:hidden;height:clamp(360px,62vh,680px);background:var(--bg)}
-.chart iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.tool{font:inherit;color:var(--fg);background:transparent;border:1px solid var(--line);border-radius:6px;padding:0 12px;min-height:36px;cursor:pointer}
+.tool[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+.spacer{flex:1}
+.chartwrap{position:relative;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--bg);height:clamp(360px,60vh,680px)}
+#chart{position:absolute;inset:0}
+#zones{position:absolute;inset:0;pointer-events:none;z-index:2;overflow:hidden}
+.zone{position:absolute;left:0;background:var(--bandfill);border-top:1px dashed var(--bandline);border-bottom:1px dashed var(--bandline)}
+.zone span{position:absolute;left:8px;top:2px;font-size:11px;font-weight:600;color:var(--bandline);white-space:nowrap}
+.legend{position:absolute;left:10px;top:8px;z-index:3;font-size:12px;font-variant-numeric:tabular-nums;pointer-events:none;display:flex;flex-wrap:wrap;gap:2px 10px;max-width:calc(100% - 90px)}
+.legend b{color:var(--muted);font-weight:600;margin-right:2px}
+.overlay{position:absolute;inset:0;z-index:4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:24px;text-align:center;background:var(--bg);color:var(--muted)}
+.overlay[hidden]{display:none}
+.overlay p{margin:0;max-width:44ch}
+.tv{position:relative;border:1px solid var(--line);border-radius:8px;overflow:hidden;height:clamp(360px,60vh,680px)}
+.tv iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 .note{font-size:12px;color:var(--muted);margin:6px 0 0}
 .grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin-top:12px}
 @media (max-width:760px){.grid{grid-template-columns:minmax(0,1fr)}}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px;min-width:0}
-.card h2{font-size:13px;margin:0 0 10px;letter-spacing:.03em;text-transform:uppercase;color:var(--muted)}
+.card h2{font-size:12px;margin:0 0 10px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
 .fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.f{display:flex;flex-direction:column;gap:3px;min-width:0}
-.f.full{grid-column:1/-1}
+.f{display:flex;flex-direction:column;gap:3px;min-width:0}.f.full{grid-column:1/-1}
 label{font-size:11px;font-weight:700;color:var(--muted)}
 input{width:100%;font:inherit;font-size:16px;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px;font-variant-numeric:tabular-nums}
+input.auto{border-color:var(--accent)}
 input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .btn{font:inherit;font-weight:700;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:6px;padding:8px 12px;cursor:pointer}
+.row{display:flex;gap:6px}.row input{flex:1;min-width:0}
 table{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
 td{border-bottom:1px solid var(--line);padding:6px 4px;vertical-align:top}
 td.n{text-align:right;white-space:nowrap;font-weight:600}
@@ -41,28 +65,47 @@ td.n{text-align:right;white-space:nowrap;font-weight:600}
 .kpi{border:1px solid var(--line);border-radius:6px;padding:8px;background:var(--bg);min-width:0}
 .kpi b{display:block;font-size:16px;overflow-wrap:anywhere}.kpi span{font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase}
 .saved{font-size:11px;color:var(--muted);margin-top:6px}
+details summary{cursor:pointer;font-size:12px;font-weight:700;color:var(--muted)}
 </style>
 </head>
 <body>
 <div class="wrap">
-<header><h1>Grafico 0DTE · backup</h1><span class="sub">Senza Claude e senza IBKR · grafico TradingView, livelli inseriti a mano</span></header>
+<header>
+  <div><h1>Grafico 0DTE · backup</h1><span class="sub">Senza Claude e senza IBKR · prezzi SPY da Twelve Data</span></div>
+  <div class="px"><span id="last">–</span><span id="chg"></span></div>
+  <span class="pill" id="status" data-s="wait" role="status"><span class="dot"></span><span id="statusText">In attesa</span></span>
+</header>
 
-<div class="bar" role="toolbar" aria-label="Opzioni grafico">
-  <div class="seg" id="symSeg"><button type="button" data-sym="SPX" aria-pressed="true">SPX</button><button type="button" data-sym="XSP" aria-pressed="false">XSP</button><button type="button" data-sym="SPY" aria-pressed="false">SPY</button></div>
-  <label class="sub" style="display:inline-flex;align-items:center;gap:6px">Rapporto SPX/SPY <input id="ratio" inputmode="decimal" autocomplete="off" style="width:86px;padding:6px" placeholder="10,03"></label>
-  <div class="seg" id="tfSeg"><button type="button" data-tf="5" aria-pressed="true">5m</button><button type="button" data-tf="15" aria-pressed="false">15m</button><button type="button" data-tf="1" aria-pressed="false">1m</button></div>
-</div>
+<div class="tabs" role="tablist"><button type="button" class="tab" role="tab" id="tabMain" aria-selected="true">Grafico</button><button type="button" class="tab" role="tab" id="tabTv" aria-selected="false">TradingView</button></div>
 
-<div class="chart"><iframe id="tv" title="Grafico TradingView" allowtransparency="true" allowfullscreen src="about:blank"></iframe></div>
-<p class="note" id="symNote"></p>
-<p class="note">Grafico e dati: TradingView (widget gratuito). Il widget non ha i dati dell'indice SPX: SPX e XSP sono ricostruiti da SPY × rapporto (XSP = SPX / 10). Il rapporto cambia poco nel tempo: aggiornalo ogni tanto dividendo la chiusura di SPX per quella di SPY dello stesso giorno. Il VWAP è calcolato sui volumi di SPY. Le linee orizzontali puoi disegnarle con gli strumenti a sinistra del grafico, ma il widget non le conserva quando ricarichi.</p>
+<section id="paneMain">
+  <div class="bar" role="toolbar" aria-label="Opzioni grafico">
+    <div class="seg" id="symSeg"><button type="button" data-sym="SPX" aria-pressed="true">SPX</button><button type="button" data-sym="XSP" aria-pressed="false">XSP</button><button type="button" data-sym="SPY" aria-pressed="false">SPY</button></div>
+    <div class="seg" id="tfSeg"><button type="button" data-tf="1min" aria-pressed="false">1m</button><button type="button" data-tf="5min" aria-pressed="true">5m</button><button type="button" data-tf="15min" aria-pressed="false">15m</button></div>
+    <button type="button" class="tool" id="vwapBtn" aria-pressed="true">VWAP</button>
+    <button type="button" class="tool" id="lvBtn" aria-pressed="true">Livelli</button>
+    <span class="spacer"></span>
+    <button type="button" class="tool" id="refresh">Aggiorna</button>
+  </div>
+  <div class="chartwrap">
+    <div id="chart"></div>
+    <div id="zones" aria-hidden="true"></div>
+    <div class="legend" id="legend"></div>
+    <div class="overlay" id="overlay" role="status"><p id="ovMsg">Inserisci la chiave Twelve Data in fondo alla pagina (Impostazioni) per vedere il grafico.</p></div>
+  </div>
+  <p class="note">SPX = SPY × rapporto, XSP = SPX / 10. Candele solo della seduta regolare (9:30-16:00 ET), orari in ora di Roma. In seduta aggiorna ogni 60 secondi con la pagina aperta (1 richiesta al minuto, dentro gli 8/minuto e 800/giorno del piano gratuito). Opening range (primi 30') e VWAP calcolati sulle barre SPY di oggi.</p>
+</section>
+
+<section id="paneTv" hidden>
+  <div class="tv"><iframe id="tv" title="Grafico TradingView" allowtransparency="true" allowfullscreen src="about:blank"></iframe></div>
+  <p class="note">Widget TradingView gratuito: SPX ≈ SPY × rapporto. Qui i livelli non si possono disegnare in automatico.</p>
+</section>
 
 <div class="grid">
 <section class="card">
   <h2>Livelli GEX 0DTE · scala SPX</h2>
   <div class="fields">
-    <div class="f"><label for="spot">Spot SPX (dal grafico)</label><input id="spot" inputmode="decimal" autocomplete="off"></div>
-    <div class="f"><label for="spy">oppure spot SPY → SPX</label><input id="spy" inputmode="decimal" autocomplete="off" placeholder="converte da solo"></div>
+    <div class="f"><label for="spot">Spot SPX</label><input id="spot" inputmode="decimal" autocomplete="off" placeholder="automatico"></div>
     <div class="f"><label for="iv">IV 0DTE di seduta %</label><input id="iv" inputmode="decimal" autocomplete="off" placeholder="es. 8,0"></div>
     <div class="f"><label for="flip">Flip</label><input id="flip" inputmode="decimal" autocomplete="off"></div>
     <div class="f"><label for="pin">Pin</label><input id="pin" inputmode="decimal" autocomplete="off"></div>
@@ -70,8 +113,6 @@ td.n{text-align:right;white-space:nowrap;font-weight:600}
     <div class="f"><label for="bHi">Fascia flip: alto</label><input id="bHi" inputmode="decimal" autocomplete="off"></div>
     <div class="f"><label for="pw">Put wall</label><input id="pw" inputmode="decimal" autocomplete="off"></div>
     <div class="f"><label for="cw">Call wall</label><input id="cw" inputmode="decimal" autocomplete="off"></div>
-    <div class="f"><label for="orLo">Opening range: basso</label><input id="orLo" inputmode="decimal" autocomplete="off"></div>
-    <div class="f"><label for="orHi">Opening range: alto</label><input id="orHi" inputmode="decimal" autocomplete="off"></div>
   </div>
   <div class="bar" style="margin:10px 0 0"><button type="button" class="btn" id="clear">Azzera livelli</button></div>
   <div class="saved" id="saved"></div>
@@ -80,70 +121,181 @@ td.n{text-align:right;white-space:nowrap;font-weight:600}
   <h2>Lettura</h2>
   <div class="kpis"><div class="kpi"><b id="kPhase">—</b><span>Fase (Roma)</span></div><div class="kpi"><b id="kReg">—</b><span>Regime</span></div><div class="kpi"><b id="kEm">—</b><span>EM residuo pt</span></div></div>
   <table id="lv"></table>
-  <p class="note">Distanze = livello − spot (negativo: livello sotto lo spot). EM residuo = spot × IV × √((minuti alla chiusura / 390) / 252). XSP = SPX / 10; SPY = SPX / rapporto. Lettura indicativa, non è consulenza finanziaria.</p>
+  <p class="note">Distanze = livello − spot (negativo: livello sotto lo spot). EM residuo = spot × IV × √((minuti alla chiusura / 390) / 252). Lettura indicativa, non è consulenza finanziaria.</p>
+</section>
+<section class="card" style="grid-column:1/-1">
+  <h2>Impostazioni</h2>
+  <div class="fields">
+    <div class="f full"><label for="key">Chiave API Twelve Data</label><div class="row"><input id="key" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="incolla qui la chiave"><button type="button" class="btn" id="keyShow">Mostra</button></div><span class="sub">Resta salvata solo su questo telefono. Chiave gratuita da twelvedata.com → Dashboard → API Keys.</span></div>
+    <div class="f"><label for="ratio">Rapporto SPX/SPY</label><input id="ratio" inputmode="decimal" autocomplete="off" placeholder="10,03"></div>
+    <div class="f"><span class="sub" style="margin-top:18px">Aggiornalo ogni tanto: chiusura SPX ÷ chiusura SPY dello stesso giorno.</span></div>
+  </div>
+  <div class="saved" id="credits"></div>
 </section>
 </div>
 </div>
 
+<script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
 <script>
 (function () {
   'use strict';
   var KEY = 'grafico0dteBackup';
-  var IDS = ['ratio', 'spot', 'iv', 'flip', 'pin', 'bLo', 'bHi', 'pw', 'cw', 'orLo', 'orHi'];
+  var LV = ['spot', 'iv', 'flip', 'pin', 'bLo', 'bHi', 'pw', 'cw'];
   var $ = function (id) { return document.getElementById(id); };
-  var st = { sym: 'SPX', tf: '5' };
-  function ratio() { var r = num('ratio'); return r && r > 9 && r < 11 ? r : 10.03; }
+  var S = { sym: 'SPX', tf: '5min', vwap: true, lv: true, bars: [], at: 0, timer: null, busy: false, used: 0 };
+
+  /* ---------- memoria locale ---------- */
   function load() { try { return JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { return {}; } }
   function save(o) { try { localStorage.setItem(KEY, JSON.stringify(o)); return true; } catch (e) { return false; } }
+  function setv(k, v) { var o = load(); o[k] = v; save(o); }
+
+  /* ---------- formati ---------- */
   function num(id) { var v = parseFloat(String($(id).value).replace(/\s/g, '').replace(',', '.')); return isFinite(v) && v > 0 ? v : null; }
-  function f(v, d) { return v == null ? '—' : v.toLocaleString('it-IT', { minimumFractionDigits: d, maximumFractionDigits: d }); }
+  function f(v, d) { return v == null || !isFinite(v) ? '—' : v.toLocaleString('it-IT', { minimumFractionDigits: d, maximumFractionDigits: d }); }
   function sg(v, d) { return (v >= 0 ? '+' : '−') + f(Math.abs(v), d); }
-  function dark() { return window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches; }
+  function ratio() { var r = num('ratio'); return r && r > 9 && r < 11 ? r : 10.03; }
+  function k() { var r = ratio(); return S.sym === 'SPX' ? r : S.sym === 'XSP' ? r / 10 : 1; }   /* SPY → simbolo mostrato */
+  function fromSpx(v) { return v == null ? null : v * k() / ratio(); }                                /* livello SPX → scala del grafico */
+  function dec() { return S.sym === 'SPX' ? 2 : 2; }
+  function status(s, t) { $('status').dataset.s = s; $('statusText').textContent = t; }
+  function overlay(msg) { $('overlay').hidden = !msg; if (msg) $('ovMsg').textContent = msg; }
 
-  function chart() {
-    var r = ratio(), k = st.sym === 'SPX' ? r : st.sym === 'XSP' ? r / 10 : 1;
-    var sym = k === 1 ? 'AMEX:SPY' : 'AMEX:SPY*' + k.toFixed(4);
-    $('symNote').textContent = st.sym === 'SPY' ? 'Grafico: SPY.' : 'Grafico: ' + st.sym + ' ≈ SPY × ' + f(k, 4) + '.';
-    var p = new URLSearchParams({ symbol: sym, interval: st.tf, hidesidetoolbar: '0', symboledit: '1', saveimage: '0',
-      studies: '["VWAP@tv-basicstudies"]', theme: dark() ? 'dark' : 'light', style: '1',
-      timezone: 'Europe/Rome', locale: 'it', withdateranges: '1' });
-    $('tv').src = 'https://s.tradingview.com/widgetembed/?' + p.toString();
+  /* ---------- orari ---------- */
+  var fmtNY = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', weekday: 'short', hourCycle: 'h23' });
+  function ny(d) { var p = {}; fmtNY.formatToParts(d).forEach(function (x) { p[x.type] = x.value; }); return { iso: p.year + '-' + p.month + '-' + p.day, min: +p.hour * 60 + +p.minute, wd: p.weekday }; }
+  var fmtRome = new Intl.DateTimeFormat('it-IT', { timeZone: 'Europe/Rome', hour: '2-digit', minute: '2-digit' });
+  function romeOffsetSec(d) { var a = new Date(d.toLocaleString('en-US', { timeZone: 'Europe/Rome' })), b = new Date(d.toLocaleString('en-US', { timeZone: 'UTC' })); return Math.round((a - b) / 1000); }
+  function inSession() { var n = ny(new Date()); return n.wd !== 'Sat' && n.wd !== 'Sun' && n.min >= 570 && n.min < 960; }
+  function phase() {
+    var n = ny(new Date()), m = n.min;
+    if (n.wd === 'Sat' || n.wd === 'Sun') return 'Chiuso';
+    if (m < 570) return 'F0'; if (m >= 960) return 'Chiuso'; if (m < 600) return 'F1';
+    if (m >= 945) return 'F6'; if (m >= 900) return 'F5'; if (m >= 810) return 'F4'; if (m >= 690) return 'F3'; return 'F2';
   }
-  function seg(id, attr, key) {
-    $(id).addEventListener('click', function (e) {
-      var b = e.target.closest('button'); if (!b) return;
-      st[key] = b.getAttribute(attr);
-      Array.prototype.forEach.call($(id).querySelectorAll('button'), function (x) { x.setAttribute('aria-pressed', String(x === b)); });
-      var o = load(); o.sym = st.sym; o.tf = st.tf; save(o); chart();
+
+  /* ---------- grafico ---------- */
+  var css = getComputedStyle(document.documentElement), C = function (n) { return css.getPropertyValue(n).trim(); };
+  var chart = null, candles = null, vwapS = null, lines = [];
+  function makeChart() {
+    if (!window.LightweightCharts) { overlay('Libreria del grafico non caricata: controlla la connessione e ricarica la pagina.'); return; }
+    chart = LightweightCharts.createChart($('chart'), {
+      autoSize: true, layout: { background: { color: C('--bg') }, textColor: C('--muted'), fontSize: 11 },
+      grid: { vertLines: { color: C('--line') }, horzLines: { color: C('--line') } },
+      rightPriceScale: { borderColor: C('--line') }, timeScale: { borderColor: C('--line'), timeVisible: true, secondsVisible: false, rightOffset: 4 },
+      crosshair: { mode: 0 }, localization: { locale: 'it-IT', priceFormatter: function (p) { return f(p, 2); } }
     });
+    candles = chart.addCandlestickSeries({ upColor: C('--up'), downColor: C('--down'), borderVisible: false, wickUpColor: C('--up'), wickDownColor: C('--down'), priceLineVisible: true, lastValueVisible: true,
+      /* la scala include i livelli GEX entro l'1% dall'ultimo prezzo, così muri e pin vicini restano visibili */
+      autoscaleInfoProvider: function (orig) {
+        var r = orig(); if (!r || S.lvOn === false || !S.bars.length) return r;
+        var last = S.bars[S.bars.length - 1].c * k(), lo = r.priceRange.minValue, hi = r.priceRange.maxValue;
+        ['cw', 'pw', 'flip', 'pin', 'bLo', 'bHi'].forEach(function (id) { var v = fromSpx(num(id)); if (v && Math.abs(v / last - 1) <= 0.01) { lo = Math.min(lo, v); hi = Math.max(hi, v); } });
+        return { priceRange: { minValue: lo, maxValue: hi }, margins: r.margins };
+      } });
+    vwapS = chart.addLineSeries({ color: C('--vwap'), lineWidth: 2, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false });
+    chart.subscribeCrosshairMove(function (p) { legend(p && p.time ? p.seriesData.get(candles) : null); });
   }
 
-  /* ora di New York e fasi della skill (minuti ET) */
-  function nyNow() {
-    var p = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', weekday: 'short', hourCycle: 'h23' }).formatToParts(new Date());
-    var g = function (t) { return (p.find(function (x) { return x.type === t; }) || {}).value; };
-    return { min: +g('hour') * 60 + +g('minute'), wd: g('weekday') };
-  }
-  function romeNow() { return new Intl.DateTimeFormat('it-IT', { timeZone: 'Europe/Rome', hour: '2-digit', minute: '2-digit' }).format(new Date()); }
-  function phase(m, wd) {
-    if (wd === 'Sat' || wd === 'Sun') return ['Chiuso', 'weekend'];
-    if (m < 570) return ['F0', 'pre-apertura'];
-    if (m >= 960) return ['Chiuso', 'dopo la chiusura'];
-    if (m < 600) return ['F1', 'apertura, solo osservazione'];
-    if (m >= 945) return ['F6', 'solo gestione'];
-    if (m >= 900) return ['F5', 'ultima ora'];
-    if (m >= 810) return ['F4', 'pinning'];
-    if (m >= 690) return ['F3', 'metà seduta'];
-    return ['F2', 'direzionale'];
+  function sessionOf(bars) { return bars.length ? bars[bars.length - 1].iso : null; }
+  function draw(fit) {
+    if (!chart) return;
+    var kk = k(), bars = S.bars, today = sessionOf(bars);
+    candles.setData(bars.map(function (b) { return { time: b.t, open: b.o * kk, high: b.h * kk, low: b.l * kk, close: b.c * kk }; }));
+    /* VWAP e opening range di oggi */
+    var pv = 0, vv = 0, vw = [], orH = null, orL = null;
+    bars.forEach(function (b) {
+      if (b.iso !== today) return;
+      pv += (b.h + b.l + b.c) / 3 * b.v; vv += b.v; if (vv > 0) vw.push({ time: b.t, value: pv / vv * kk });
+      if (b.m < 600) { orH = orH == null ? b.h : Math.max(orH, b.h); orL = orL == null ? b.l : Math.min(orL, b.l); }
+    });
+    S.vwap = vv > 0 ? pv / vv : null; S.orH = orH; S.orL = orL; S.orDone = bars.length && bars[bars.length - 1].iso === today && bars[bars.length - 1].m >= 595;
+    vwapS.setData(S.vwapOn === false ? [] : vw);
+    priceLines();
+    if (fit) chart.timeScale().fitContent();
+    legend(null); header();
   }
 
+  function priceLines() {
+    lines.forEach(function (l) { candles.removePriceLine(l); }); lines = [];
+    var add = function (v, color, title, style, w) { if (v == null) return; lines.push(candles.createPriceLine({ price: v, color: color, lineWidth: w || 1, lineStyle: style, axisLabelVisible: true, title: title })); };
+    var kk = k();
+    if (S.orH != null) { add(S.orH * kk, C('--or'), 'OR alto', 2); add(S.orL * kk, C('--or'), 'OR basso', 2); }
+    if (S.lvOn !== false) {
+      add(fromSpx(num('cw')), C('--call'), 'Call wall', 0, 2);
+      add(fromSpx(num('pw')), C('--put'), 'Put wall', 0, 2);
+      add(fromSpx(num('flip')), C('--flip'), 'Flip', 1, 1);
+      add(fromSpx(num('pin')), C('--pin'), 'Pin', 2, 1);
+    }
+    zones();
+  }
+
+  /* fascia di incertezza: rettangolo sopra il grafico, riposizionato di continuo (scala e zoom cambiano) */
+  function zones() {
+    var z = $('zones'), lo = num('bLo'), hi = num('bHi');
+    if (!chart || S.lvOn === false || !lo || !hi || !S.bars.length) { z.innerHTML = ''; return; }
+    if (lo > hi) { var t = lo; lo = hi; hi = t; }
+    var y1 = candles.priceToCoordinate(fromSpx(hi)), y2 = candles.priceToCoordinate(fromSpx(lo)), w = $('chart').clientWidth - chart.priceScale('right').width();
+    if (y1 == null || y2 == null) { z.innerHTML = ''; return; }
+    var top = Math.min(y1, y2), h = Math.max(2, Math.abs(y2 - y1));
+    var html = '<div class="zone" style="top:' + top + 'px;height:' + h + 'px;width:' + w + 'px"><span>Fascia flip ' + f(fromSpx(lo), 2) + '–' + f(fromSpx(hi), 2) + '</span></div>';
+    if (z.innerHTML !== html) z.innerHTML = html;
+  }
+
+  function legend(d) {
+    var b = S.bars[S.bars.length - 1]; if (!b) { $('legend').innerHTML = ''; return; }
+    var kk = k(), o = d ? d : { open: b.o * kk, high: b.h * kk, low: b.l * kk, close: b.c * kk };
+    var vw = S.vwap != null && S.vwapOn !== false ? '<span><b>VWAP</b>' + f(S.vwap * kk, 2) + '</span>' : '';
+    $('legend').innerHTML = '<span><b>' + S.sym + '</b>' + (S.sym === 'SPY' ? '' : '≈ SPY×' + f(kk, 4)) + '</span><span><b>A</b>' + f(o.open, 2) + '</span><span><b>Max</b>' + f(o.high, 2) + '</span><span><b>Min</b>' + f(o.low, 2) + '</span><span><b>C</b>' + f(o.close, 2) + '</span>' + vw;
+  }
+
+  function header() {
+    var b = S.bars[S.bars.length - 1]; if (!b) return;
+    var kk = k(), today = b.iso, prev = null;
+    for (var i = S.bars.length - 1; i >= 0; i--) if (S.bars[i].iso !== today) { prev = S.bars[i].c; break; }
+    $('last').textContent = f(b.c * kk, 2);
+    if (prev) { var c = (b.c - prev) * kk; $('chg').textContent = sg(c, 2) + ' (' + sg(c / (prev * kk) * 100, 2) + '%)'; $('chg').className = c >= 0 ? 'up' : 'down'; } else $('chg').textContent = '';
+    /* spot SPX automatico dall'ultimo prezzo SPY */
+    if (!S.manualSpot) { $('spot').value = (b.c * ratio()).toFixed(2).replace('.', ','); $('spot').classList.add('auto'); }
+    render();
+  }
+
+  /* ---------- dati Twelve Data ---------- */
+  var ERR = { 401: 'Chiave API non valida: ricontrollala nelle Impostazioni.', 403: 'Il piano della chiave non include questo dato.', 429: 'Limite di richieste raggiunto (8 al minuto o 800 al giorno): riprovo più tardi.', 400: 'Richiesta non valida.', 404: 'Dati non trovati.', 500: 'Errore del server Twelve Data: riprovo tra poco.' };
+  async function fetchBars(fit) {
+    var key = ($('key').value || '').trim();
+    if (!key) { overlay('Inserisci la chiave Twelve Data nelle Impostazioni in fondo alla pagina.'); status('wait', 'Chiave mancante'); return; }
+    if (S.busy) return; S.busy = true; status('wait', 'Aggiorno…');
+    var size = S.tf === '1min' ? 500 : S.tf === '5min' ? 160 : 60;
+    var url = 'https://api.twelvedata.com/time_series?symbol=SPY&interval=' + S.tf + '&outputsize=' + size + '&timezone=UTC&order=asc&apikey=' + encodeURIComponent(key);
+    try {
+      var r = await fetch(url, { cache: 'no-store' }), j = await r.json();
+      S.used++; $('credits').textContent = 'Richieste a Twelve Data da quando hai aperto la pagina: ' + S.used + ' (limite gratuito: 8 al minuto, 800 al giorno).';
+      if (j.status === 'error' || !j.values) { var msg = ERR[j.code] || ('Twelve Data: ' + (j.message || 'errore')); status('err', msg); if (!S.bars.length) overlay(msg); return; }
+      var bars = [];
+      j.values.forEach(function (v) {
+        var d = new Date(v.datetime.replace(' ', 'T') + 'Z'), n = ny(d);
+        if (n.min < 570 || n.min >= 960) return;
+        bars.push({ t: Math.floor(d.getTime() / 1000) + romeOffsetSec(d), iso: n.iso, m: n.min, o: +v.open, h: +v.high, l: +v.low, c: +v.close, v: +(v.volume || 0) });
+      });
+      if (!bars.length) { status('warn', 'Nessuna barra ricevuta'); return; }
+      S.bars = bars; S.at = Date.now(); overlay(null); draw(fit);
+      status(inSession() ? 'live' : 'warn', (inSession() ? 'Aggiornato ' : 'Fuori seduta · ultimo dato ') + fmtRome.format(new Date()));
+    } catch (e) {
+      var m = 'Il browser non riesce a leggere Twelve Data (rete assente o richiesta bloccata). Riprova; se si ripete, usa la scheda TradingView.';
+      status('err', 'Connessione non riuscita'); if (!S.bars.length) overlay(m);
+    } finally { S.busy = false; }
+  }
+  function schedule() {
+    clearInterval(S.timer);
+    S.timer = setInterval(function () { if (!document.hidden && inSession()) fetchBars(false); }, 60000);
+  }
+
+  /* ---------- lettura ---------- */
   function render() {
-    var ny = nyNow(), ph = phase(ny.min, ny.wd);
-    $('kPhase').textContent = romeNow() + ' · ' + ph[0];
-    $('kPhase').title = ph[1];
+    $('kPhase').textContent = fmtRome.format(new Date()) + ' · ' + phase();
     var spot = num('spot'), iv = num('iv'), lo = num('bLo'), hi = num('bHi');
     if (lo && hi && lo > hi) { var t = lo; lo = hi; hi = t; }
-    var left = ny.min < 570 ? 390 : Math.max(0, 960 - ny.min);
+    var n = ny(new Date()), left = n.min < 570 ? 390 : Math.max(0, 960 - n.min);
     var em = spot && iv ? spot * iv / 100 / Math.sqrt(252) * Math.sqrt(Math.max(left, 30) / 390) : null;
     $('kEm').textContent = em ? f(em, 1) : '—';
     var reg = '—';
@@ -152,32 +304,79 @@ td.n{text-align:right;white-space:nowrap;font-weight:600}
       else { var d = spot > hi ? spot - hi : lo - spot; reg = (spot > hi ? 'Positivo' : 'Negativo') + (em ? (d / em >= 0.25 ? ' pieno' : ' debole') : ''); }
     }
     $('kReg').textContent = reg;
-    var rows = [['Call wall', 'cw', 'var(--call)'], ['Pin', 'pin', 'var(--pin)'], ['OR alto', 'orHi', 'var(--muted)'], ['Fascia alto', 'bHi', '#c9a227'], ['Flip', 'flip', 'var(--flip)'], ['Fascia basso', 'bLo', '#c9a227'], ['OR basso', 'orLo', 'var(--muted)'], ['Put wall', 'pw', 'var(--put)']];
-    var list = rows.map(function (r) { return { name: r[0], v: num(r[1]), c: r[2] }; }).filter(function (r) { return r.v; });
-    if (spot) list.push({ name: 'Spot', v: spot, c: 'var(--accent)', spot: true });
+    var r = ratio();
+    var rows = [['Call wall', num('cw'), C('--call')], ['Pin', num('pin'), C('--pin')], ['OR alto', S.orH ? S.orH * r : null, C('--or')], ['Fascia alto', hi, C('--bandline')], ['VWAP', S.vwap ? S.vwap * r : null, C('--vwap')], ['Flip', num('flip'), C('--flip')], ['Fascia basso', lo, C('--bandline')], ['OR basso', S.orL ? S.orL * r : null, C('--or')], ['Put wall', num('pw'), C('--put')]];
+    var list = rows.filter(function (x) { return x[1]; }).map(function (x) { return { name: x[0], v: x[1], c: x[2] }; });
+    if (spot) list.push({ name: 'Spot', v: spot, c: C('--accent'), spot: true });
     list.sort(function (a, b) { return b.v - a.v; });
-    $('lv').innerHTML = list.length ? list.map(function (r) {
-      var dist = spot && !r.spot ? sg(r.v - spot, 1) + ' pt' + (em ? ' · ' + sg((r.v - spot) / em, 2) + ' EM' : '') : (r.spot ? 'riferimento' : '');
-      return '<tr><td><span class="sw" style="background:' + r.c + '"></span>' + (r.spot ? '<b>' + r.name + '</b>' : r.name) + '</td><td class="n">' + f(r.v, 2) + '<br><span class="sub">XSP ' + f(r.v / 10, 2) + ' · SPY ' + f(r.v / ratio(), 2) + '</span></td><td class="n">' + dist + '</td></tr>';
+    $('lv').innerHTML = list.length ? list.map(function (x) {
+      var dist = spot && !x.spot ? sg(x.v - spot, 1) + ' pt' + (em ? ' · ' + sg((x.v - spot) / em, 2) + ' EM' : '') : (x.spot ? 'riferimento' : '');
+      return '<tr><td><span class="sw" style="background:' + x.c + '"></span>' + (x.spot ? '<b>Spot</b>' : x.name) + '</td><td class="n">' + f(x.v, 2) + '<br><span class="sub">XSP ' + f(x.v / 10, 2) + ' · SPY ' + f(x.v / r, 2) + '</span></td><td class="n">' + dist + '</td></tr>';
     }).join('') : '<tr><td class="sub">Inserisci i livelli a sinistra.</td></tr>';
   }
 
-  function persist() {
-    var o = load(); IDS.forEach(function (id) { o[id] = $(id).value; }); o.at = Date.now();
-    $('saved').textContent = save(o) ? 'Salvato su questo dispositivo alle ' + romeNow() + '.' : 'Questo browser non permette il salvataggio: i livelli si perdono alla chiusura.';
-    render();
+  /* ---------- TradingView ---------- */
+  function tv() {
+    var kk = k(), sym = kk === 1 ? 'AMEX:SPY' : 'AMEX:SPY*' + kk.toFixed(4), iv = S.tf === '1min' ? '1' : S.tf === '5min' ? '5' : '15';
+    var p = new URLSearchParams({ symbol: sym, interval: iv, hidesidetoolbar: '0', symboledit: '1', saveimage: '0', studies: '["VWAP@tv-basicstudies"]',
+      theme: matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light', style: '1', timezone: 'Europe/Rome', locale: 'it', withdateranges: '1' });
+    $('tv').src = 'https://s.tradingview.com/widgetembed/?' + p.toString();
+  }
+  function showTab(which) {
+    var main = which !== 'tv';
+    $('paneMain').hidden = !main; $('paneTv').hidden = main;
+    $('tabMain').setAttribute('aria-selected', String(main)); $('tabTv').setAttribute('aria-selected', String(!main));
+    if (!main) tv(); setv('tab', which);
   }
 
+  /* ---------- eventi ---------- */
+  function seg(id, attr, key) {
+    $(id).addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b) return;
+      S[key] = b.getAttribute(attr); setv(key, S[key]);
+      Array.prototype.forEach.call($(id).querySelectorAll('button'), function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+      if (key === 'tf') { S.bars = []; fetchBars(true); } else { draw(false); render(); }
+      if (!$('paneTv').hidden) tv();
+    });
+  }
+  function toggle(id, key) { $(id).addEventListener('click', function () { S[key] = !(S[key] !== false); this.setAttribute('aria-pressed', String(S[key])); setv(key, S[key]); draw(false); }); }
+
+  function persist() {
+    var o = load(); LV.forEach(function (id) { o[id] = $(id).value; }); o.at = Date.now(); o.manualSpot = S.manualSpot;
+    $('saved').textContent = save(o) ? 'Salvato su questo telefono alle ' + fmtRome.format(new Date()) + '.' : 'Questo browser non permette il salvataggio.';
+    if (chart) { priceLines(); chart.priceScale('right').applyOptions({ autoScale: true }); } render();
+  }
+
+  /* ---------- avvio ---------- */
   var o = load();
-  IDS.forEach(function (id) { if (o[id] != null) $(id).value = o[id]; $(id).addEventListener('input', persist); });
+  LV.forEach(function (id) { if (o[id] != null) $(id).value = o[id]; });
+  ['key', 'ratio'].forEach(function (id) { if (o[id]) $(id).value = o[id]; });
+  S.manualSpot = !!o.manualSpot; if (!S.manualSpot) $('spot').classList.add('auto');
   if (o.at) $('saved').textContent = 'Livelli salvati il ' + new Date(o.at).toLocaleString('it-IT', { timeZone: 'Europe/Rome', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) + ': controlla che siano di oggi.';
-  if (o.sym && ['SPX', 'XSP', 'SPY'].indexOf(o.sym) >= 0) st.sym = o.sym; if (o.tf) st.tf = o.tf;
-  ['symSeg', 'tfSeg'].forEach(function (id) { Array.prototype.forEach.call($(id).querySelectorAll('button'), function (b) { b.setAttribute('aria-pressed', String((b.dataset.sym || b.dataset.tf) === (id === 'symSeg' ? st.sym : st.tf))); }); });
+  if (['SPX', 'XSP', 'SPY'].indexOf(o.sym) >= 0) S.sym = o.sym;
+  if (['1min', '5min', '15min'].indexOf(o.tf) >= 0) S.tf = o.tf;
+  S.vwapOn = o.vwap !== false; S.lvOn = o.lv !== false;
+  $('vwapBtn').setAttribute('aria-pressed', String(S.vwapOn)); $('lvBtn').setAttribute('aria-pressed', String(S.lvOn));
+  Array.prototype.forEach.call($('symSeg').querySelectorAll('button'), function (b) { b.setAttribute('aria-pressed', String(b.dataset.sym === S.sym)); });
+  Array.prototype.forEach.call($('tfSeg').querySelectorAll('button'), function (b) { b.setAttribute('aria-pressed', String(b.dataset.tf === S.tf)); });
+
+  LV.forEach(function (id) { $(id).addEventListener('input', function () { if (id === 'spot') { S.manualSpot = !!this.value; this.classList.toggle('auto', !this.value); } persist(); }); });
+  $('key').addEventListener('change', function () { setv('key', this.value.trim()); S.bars = []; fetchBars(true); });
+  $('keyShow').addEventListener('click', function () { var p = $('key').type === 'password'; $('key').type = p ? 'text' : 'password'; this.textContent = p ? 'Nascondi' : 'Mostra'; });
+  var rt; $('ratio').addEventListener('input', function () { setv('ratio', this.value); clearTimeout(rt); rt = setTimeout(function () { draw(false); if (!$('paneTv').hidden) tv(); }, 500); });
   seg('symSeg', 'data-sym', 'sym'); seg('tfSeg', 'data-tf', 'tf');
-  $('spy').addEventListener('input', function () { var v = num('spy'); if (v) { $('spot').value = (v * ratio()).toFixed(2).replace('.', ','); persist(); } });
-  var rt; $('ratio').addEventListener('input', function () { clearTimeout(rt); rt = setTimeout(chart, 800); });
-  $('clear').addEventListener('click', function () { IDS.forEach(function (id) { if (id !== 'iv') $(id).value = ''; }); persist(); });
-  chart(); render(); setInterval(render, 30000);
+  $('vwapBtn').addEventListener('click', function () { S.vwapOn = !S.vwapOn; this.setAttribute('aria-pressed', String(S.vwapOn)); setv('vwap', S.vwapOn); draw(false); });
+  $('lvBtn').addEventListener('click', function () { S.lvOn = !S.lvOn; this.setAttribute('aria-pressed', String(S.lvOn)); setv('lv', S.lvOn); draw(false); });
+  $('refresh').addEventListener('click', function () { fetchBars(false); });
+  $('clear').addEventListener('click', function () { LV.forEach(function (id) { if (id !== 'iv' && id !== 'spot') $(id).value = ''; }); persist(); });
+  $('tabMain').addEventListener('click', function () { showTab('main'); });
+  $('tabTv').addEventListener('click', function () { showTab('tv'); });
+  document.addEventListener('visibilitychange', function () { if (!document.hidden && inSession() && Date.now() - S.at > 55000) fetchBars(false); });
+
+  makeChart();
+  setInterval(zones, 250); setInterval(render, 30000);
+  render(); schedule(); fetchBars(true);
+  if (o.tab === 'tv') showTab('tv');
 })();
 </script>
 </body>
